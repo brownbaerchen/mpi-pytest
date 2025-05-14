@@ -59,3 +59,35 @@ jobs:
       - name: Run tests
         run: |
           pytest --continue-on-collection-errors -v tests
+
+  tests-firedrake:
+    runs-on: ubuntu-latest
+    container:
+      image: firedrakeproject/firedrake-vanilla-default:latest
+      options: --user root
+      volumes:
+        - ${{ github.workspace }}:/repositories
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Fix HOME
+        # For unknown reasons GitHub actions overwrite HOME to /github/home
+        # which will break everything unless fixed
+        # (https://github.com/actions/runner/issues/863)
+        run: echo "HOME=/home/firedrake" >> "$GITHUB_ENV"
+      - name: Checkout mpi-pytest
+        uses: actions/checkout@v4
+        with: 
+          path: ./mpi-pytest
+      - name: Create virtual environment
+        # pass '--system-site-packages' so Firedrake can be found
+        run: python3 -m venv --system-site-packages my_venv
+      - name: Install mpi-pytest as a package in the current environment
+        run: |
+          . my_venv/bin/activate
+          pip install --no-deps -e ./mpi-pytest
+      - name: Run tests
+        run: |
+          . my_venv/bin/activate
+          pytest --continue-on-collection-errors -v ./mpi-pytest/tests
