@@ -80,6 +80,8 @@ jobs:
         uses: actions/checkout@v4
         with: 
           path: ./mpi-pytest
+      - name: Print MPI version
+        run: mpiexec --version
       - name: Create virtual environment
         # pass '--system-site-packages' so Firedrake can be found
         run: python3 -m venv --system-site-packages my_venv
